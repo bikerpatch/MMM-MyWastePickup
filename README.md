@@ -30,17 +30,17 @@ to determine your collection calendar, and configure it as below:
       <td><strong>REQUIRED</strong> The schedule for your curbside pickup, as dertmined above.<br><br><strong>String</strong> <code>Array</code><br />Valid values are <code>MondayNight</code>, <code>Tuesday1</code>, <code>Tuesday2</code>, <code>Wednesday1</code>, <code>Wednesday2</code>, <code>Thursday1</code>, <code>Thursday2</code>, <code>Friday1</code>, or <code>Friday2</code>.<br />It is also possible to specify <code>Custom</code> and <code>CustomURL</code> in case you want to use your own custom pickup schedule.  See below for more information about using your own schedule.<br /><br />Any other value will be ignored and the module will default to <code>Tuesday1</code>.</td>
     </tr>
     <tr>
+      <td><code>collectionCalendarUrl</code></td>
+      <td><strong>REQUIRED if <code>collectionCalendar</code> is <code>CustomURL</code></strong> The URL to the collection calendar CSV
+      <br /><br /><strong>String</strong></td>
+    </tr>
+    <tr>
       <td><code>weeksToDisplay</code></td>
       <td>How many weeks into the future to show collection dates.<br /><br /><strong>Number</strong><br />Default: <code>2</code>.</td>
     </tr>
     <tr>
       <td><code>limitTo</code></td>
       <td>Limit the display to the spcified number of pickups.<br /><br /><strong>Number</strong><br />Default: <code>99</code>.</td>
-    </tr>
-    <tr>
-      <td><code>collectionCalendarUrl</code></td>
-      <td><strong>REQUIRED IF COLLECTIONCALENDAR IS <code>CustomURL</code></strong> The URL to the collection calendar CSV
-      <br /><br /><strong>String</strong></td>
     </tr>
     <tr>
       <td><code>reloadInterval</code></td>
@@ -117,8 +117,8 @@ The following points are very important:
 * The date format needs to be specified as `MM/DD/YY` (e.g.: 05/28/18 for 28-May-2018)
 * The last five fields of each line specify whether the particular waste product is scheduled to be picked up on the given date. A value of `0` means no pick up. A value of ANYTHING ELSE means the product will be picked up.  Using the first pick up date entry in the template above, `1,0,1,0,0` means that `GreenBin` and `Recycling` will be picked up on that date, while `Garbage`, `YardWaste`, and `ChristmasTree` will not be picked up.
 
-3. Upload the file to a fileserver, and specify `collectionCalendarUrl: 'https://path.com/to/your/schedule.csv'`
-4. Restart Magic Mirror.  Subsequent updates to the CSV file on the fileserver will be picked up on next reload
+1. Upload the file to a fileserver, and specify `collectionCalendarUrl: 'https://yourdomain.com/path/to/your/schedule.csv'`
+2. Restart Magic Mirror.  Subsequent updates to the CSV file on the fileserver will be picked up on next reload
 
 ## Using Your Own Custom Schedule - CSV File
 
