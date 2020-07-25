@@ -1,9 +1,12 @@
 Module.register('MMM-MyWastePickup', {
 
   defaults: {
+    debug: false,
     collectionCalendar: "Tuesday1",
     weeksToDisplay: 2,
-    limitTo: 99
+    limitTo: 99,
+    collectionCalendarUrl: '',
+    reloadInterval: 1000 * 60 * 60 * 1 // 1hr
   },
 
   validCollectionCalendars: [
@@ -16,7 +19,8 @@ Module.register('MMM-MyWastePickup', {
     "Thursday2",
     "Friday1",
     "Friday2",
-    "Custom"
+    "Custom",
+    "CustomURL"
   ],
 
   // Define required styles.
@@ -45,13 +49,13 @@ Module.register('MMM-MyWastePickup', {
     clearTimeout(this.timer);
     this.timer = null;
 
-    this.sendSocketNotification("MMM-MYWASTEPICKUP-GET", {collectionCalendar: this.config.collectionCalendar, weeksToDisplay: this.config.weeksToDisplay, instanceId: this.identifier});
+    this.sendSocketNotification("MMM-MYWASTEPICKUP-GET", {debug: this.config.debug, collectionCalendar: this.config.collectionCalendar, collectionCalendarUrl: this.config.collectionCalendarUrl, reloadInterval: this.config.reloadInterval, weeksToDisplay: this.config.weeksToDisplay, instanceId: this.identifier});
 
     //set alarm to check again tomorrow
     var self = this;
     this.timer = setTimeout( function() {
       self.getPickups();
-    }, 60 * 60 * 1000); //update once an hour
+    }, this.config.reloadInterval); //update according to the config
   },
 
   socketNotificationReceived: function(notification, payload) {

@@ -1,3 +1,5 @@
+const request = require('request');
+
 var NodeHelper = require("node_helper");
 var fs = require('fs');
 var parse = require("csv-parse");
@@ -7,7 +9,7 @@ var moment = require("moment");
 module.exports = NodeHelper.create({
 
   start: function() {
-    console.log("Starting node_helper for module: " + this.name);
+    console.log("[MYWASTEPICKUP] Starting node_helper for module: " + this.name);
 
     this.schedule = null;
 
@@ -23,28 +25,52 @@ module.exports = NodeHelper.create({
 
     var self = this;
 
-    if (this.schedule == null) {
-      //not yet setup. Load and parse the data file; set up variables.
+    if (payload.debug == true) console.log("[MYWASTEPICKUP] Notification received: ", notification);
+    if ((this.schedule == null) || ((payload.collectionCalendar == "CustomURL") && (payload.collectionCalendarUrl != null))) {
+      //not yet setup, or URL needs refreshing. Load and parse the data file; set up variables.
 
-      var scheduleFile = this.scheduleCSVFile;
-      if (payload.collectionCalendar == "Custom") {
-        scheduleFile = this.scheduleCustomCSVFile;
-      }
+      if (payload.debug == true) console.log("[MYWASTEPICKUP] Schedule detected as null");
+      if ((payload.collectionCalendar == "CustomURL") && (payload.collectionCalendarUrl != null)) {
+        if (payload.debug == true) console.log("[MYWASTEPICKUP] Getting schedule from URL: ", payload.collectionCalendarUrl);
+        // get from URL
 
-      fs.readFile(scheduleFile, "utf8", function(err, rawData) {
-        if (err) throw err;
-        parse(rawData, {delimiter: ",", columns: true, ltrim: true}, function(err, parsedData) {
-          if (err) throw err;
-
-          self.schedule = parsedData;
-          self.postProcessSchedule();
-          self.getNextPickups(payload);
+        this.callAPI(payload.collectionCalendarUrl, payload.debug, (err, rawData)=>{
+          self.processRawData(err, rawData, payload);
         });
-      });
+
+      } else {
+        
+        var scheduleFile = this.scheduleCSVFile;
+        if (payload.collectionCalendar == "Custom") {
+          scheduleFile = this.scheduleCustomCSVFile;
+        }
+
+        if (payload.debug == true) console.log("[MYWASTEPICKUP] Getting schedule from file: ", scheduleFile);
+        
+        fs.readFile(scheduleFile, "utf8", function(err, rawData) {
+          self.processRawData(err, rawData, payload);
+        });
+
+      }
     } else {
       this.getNextPickups(payload);
     }
 
+  },
+
+  processRawData: function(err, rawData, payload) {
+    var self = this;
+
+    if (payload.debug == true) console.log("[MYWASTEPICKUP] Processing raw data");
+    
+    if (err) throw err;
+    parse(rawData, {delimiter: ",", columns: true, ltrim: true}, function(err, parsedData) {
+      if (err) throw err;
+
+      self.schedule = parsedData;
+      self.postProcessSchedule();
+      self.getNextPickups(payload);
+    });
   },
 
   postProcessSchedule: function() {
@@ -81,6 +107,24 @@ module.exports = NodeHelper.create({
 
     this.sendSocketNotification('MMM-MYWASTEPICKUP-RESPONSE' + payload.instanceId, nextPickups);
 
+  },
+
+  callAPI: function(url, debug, callback) {
+    
+    request(url, (error, response, body)=>{
+      
+      if (debug == true) console.log("[MYWASTEPICKUP] Making URL request");
+
+      if (error) {
+        console.error("[MYWASTEPICKUP] URL Error ", error);
+        callback(error);
+      } else {
+
+        if (debug == true) console.log("[MYWASTEPICKUP] Response ", response && response.statusCode);
+
+        callback(error, body);
+      }
+    })
   }
 
 });
